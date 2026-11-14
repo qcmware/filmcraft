@@ -1159,6 +1159,80 @@ fn build() -> Vec<CommandSpec> {
             s.events.push(crate::Event::ProjectChanged { revision: s.revision });
             Ok(Value::Null)
         }),
+        cmd!(
+            "file.newProjectFromSources",
+            "New Project From Sources…",
+            ["File", "New"],
+            None,
+            r#"{"name":str,"paths":[str]?,"location":binId?,"count":u32=3,"seconds":f64=5}"#,
+            always,
+            |s, p| {
+                let name = str_p(p, "name").unwrap_or("Untitled").to_string();
+                let count = p.get("count").and_then(Value::as_u64).unwrap_or(3).min(100) as usize;
+                let secs = f64_p(p, "seconds").unwrap_or(5.0);
+                let location = u64_p(p, "location").map(filmcraft_project::BinId);
+
+                s.execute("file.newProject", json!({ "name": name }))?;
+
+                let item_ids: Vec<u64> = if let Some(paths) = p.get("paths") {
+                    let paths = paths.as_array().ok_or_else(|| bad("file.newProjectFromSources", "`paths` must be a list of file paths"))?;
+                    let paths: Vec<&str> = paths.iter().filter_map(Value::as_str).collect();
+                    if paths.is_empty() {
+                        return Err(bad("file.newProjectFromSources", "`paths` must contain at least one file path"));
+                    }
+                    let imported = s.execute(
+                        "file.import",
+                        json!({
+                            "paths": paths,
+                            "bin": location.map(|b| b.0),
+                        }),
+                    )?;
+                    let items = imported["items"].as_array().cloned().unwrap_or_default();
+                    if items.is_empty() {
+                        return Err(bad("file.newProjectFromSources", "none of the selected media could be imported"));
+                    }
+                    items.into_iter().filter_map(|item| item.as_u64()).collect()
+                } else if let Some(bin_id) = location {
+                    s.project
+                        .root
+                        .find_bin(bin_id)
+                        .map(|b| {
+                            b.children
+                                .iter()
+                                .filter_map(|entry| match entry {
+                                    filmcraft_project::BinEntry::Item(id) => Some(id.0),
+                                    filmcraft_project::BinEntry::Bin(_) => None,
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default()
+                } else {
+                    let mut ids = Vec::with_capacity(count);
+                    for _ in 0..count {
+                        let r = s.execute("file.newBlackVideo", json!({ "seconds": secs }))?;
+                        if let Some(id) = r["item"].as_u64() {
+                            ids.push(id);
+                        }
+                    }
+                    ids
+                };
+
+                if item_ids.is_empty() {
+                    return Ok(json!({ "items": item_ids, "clips": [] }));
+                }
+
+                s.execute(
+                    "file.newSequence",
+                    json!({
+                        "name": "Sequence 01",
+                        "video": 1,
+                        "audio": 1,
+                    }),
+                )?;
+                let placed = s.execute("timeline.place", json!({ "items": item_ids, "time": 0, "insert": false }))?;
+                Ok(json!({ "items": item_ids, "clips": placed["clips"] }))
+            }
+        ),
         cmd!("file.openDemoProject", "Demo Project", ["File", "New"], None, "{}", always, |s, _| {
             let (p, seq) = crate::demo::demo_project(&s.media);
             s.project = std::sync::Arc::new(p);

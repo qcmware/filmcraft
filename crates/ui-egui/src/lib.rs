@@ -1359,6 +1359,24 @@ impl FilmcraftApp {
 
     pub fn file_dialog(&mut self, id: &str, params: &Value) -> Result<Value, String> {
         match id {
+            "file.newProjectFromSources" => {
+                let exts: Vec<&str> = filmcraft_media::VIDEO_EXTENSIONS
+                    .iter()
+                    .chain(filmcraft_media::AUDIO_EXTENSIONS)
+                    .chain(filmcraft_media::STILL_EXTENSIONS)
+                    .copied()
+                    .collect();
+                let mut command = params.clone();
+                self.pick(FileDialog::open_files(&exts), move |app, paths| {
+                    if paths.is_empty() {
+                        return Ok(Value::Null);
+                    }
+                    let name = command.get("name").cloned().unwrap_or_else(|| json!("Untitled"));
+                    command["name"] = name;
+                    command["paths"] = json!(paths);
+                    app.session.execute("file.newProjectFromSources", command).map_err(|e| e.to_string())
+                })
+            }
             "file.import" => {
                 let exts: Vec<&str> = filmcraft_media::VIDEO_EXTENSIONS
                     .iter()
