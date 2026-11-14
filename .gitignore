@@ -6,3 +6,5 @@ plan/
 .DS_Store
 .claude/worktrees/
 __pycache__/
+.graphify/*
+.idea/*
