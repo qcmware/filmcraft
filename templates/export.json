@@ -1,0 +1,11 @@
+{
+    "method": "engine.execute",
+    "params": {
+        "command": "file.exportMedia",
+        "params": {
+            "path": "C:\\Users\\qcmar\\Videos\\Realtors\\Itzae Residencial - Realtor's PRO - Desarrollo No. 7.mp4",
+            "format": "h264",
+            "wait": false
+        }
+    }
+}

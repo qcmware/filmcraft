@@ -11,7 +11,7 @@ parser.add_argument("--port", type=int, default=9876)
 request_source = parser.add_mutually_exclusive_group()
 request_source.add_argument(
     "--request",
-    default="server-args.json",
+    default="templates/server-args.json",
     help="Archivo JSON que se enviará a FilmCraft",
 )
 request_source.add_argument(

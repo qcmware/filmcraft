@@ -1,0 +1,23 @@
+[
+  {
+    "method": "engine.execute",
+    "params": {
+      "command": "playhead.set",
+      "params": {
+        "seconds": 453.4
+      }
+    }
+  },
+  {
+    "method": "engine.execute",
+    "params": {
+      "command": "graphics.newText",
+      "params": {
+        "text": "Desarrollo N° 7",
+        "newClip": true,
+        "track": 2,
+        "seconds": 0
+      }
+    }
+  }
+]

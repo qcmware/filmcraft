@@ -1,0 +1,15 @@
+{
+  "id": 2,
+  "token": "...",
+  "method": "engine.execute",
+  "params": {
+    "command": "file.newProjectFromSources",
+    "params": {
+      "name": "...",
+      "paths": [
+        "...",
+        "..."
+      ]
+    }
+  }
+}
